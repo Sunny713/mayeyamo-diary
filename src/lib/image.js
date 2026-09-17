@@ -16,12 +16,13 @@ export function readFileAsDataURL(file) {
 /**
  * 이미지 파일을 리사이즈하여 { base64, mime, extension } 형태로 반환합니다.
  * base64는 data URL 접두어(data:image/png;base64,)가 제거된 순수 값입니다.
+ * maxWidth를 넘기면 기본(900px) 대신 그 너비로 축소합니다. (예: 댓글의 작은 이모티콘 이미지)
  */
-export async function resizeImageFile(file) {
+export async function resizeImageFile(file, { maxWidth = MAX_WIDTH } = {}) {
   const dataUrl = await readFileAsDataURL(file)
   const img = await loadImage(dataUrl)
 
-  const scale = Math.min(1, MAX_WIDTH / img.width)
+  const scale = Math.min(1, maxWidth / img.width)
   const width = Math.round(img.width * scale)
   const height = Math.round(img.height * scale)
 

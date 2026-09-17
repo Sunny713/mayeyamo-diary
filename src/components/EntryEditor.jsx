@@ -1,14 +1,16 @@
 import React, { useRef, useState } from 'react'
 import { emptyEntry, getChecklistFields, imagePath, saveEntry } from '../lib/dataModel.js'
 import { resizeImageFile } from '../lib/image.js'
+import { isContentEmpty } from '../lib/richContent.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { DIARY_WORD } from '../config.js'
 import RemoteImage from './RemoteImage.jsx'
 import HashtagInput from './HashtagInput.jsx'
+import RichTextEditor from './RichTextEditor.jsx'
 
 function hasAnyContent(content, checklist, moodTags, imageCount) {
   const anyChecked = Object.entries(checklist).some(([key, value]) => key !== 'sleepHours' && value)
-  return !!content.trim()
+  return !isContentEmpty(content)
     || anyChecked
     || checklist.sleepHours !== ''
     || moodTags.length > 0
@@ -91,12 +93,12 @@ export default function EntryEditor({ date, memberId, initialEntry, initialSha, 
         <HashtagInput value={moodTags} onChange={setMoodTags} placeholder="#피곤 #설렘 처럼 적어보세요" />
       </div>
 
-      <textarea
-        className="entry-textarea"
-        rows={6}
+      <RichTextEditor
+        initialContent={content}
+        onChange={setContent}
+        date={date}
+        memberId={memberId}
         placeholder="오늘 하루는 어땠나요?"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
       />
 
       <div className="image-upload-row">

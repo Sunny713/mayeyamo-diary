@@ -217,3 +217,26 @@ export function makeCommentId() {
   if (window.crypto?.randomUUID) return window.crypto.randomUUID()
   return `c-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
+
+// 평면 댓글 배열(parentId로 연결)을 트리로 변환합니다.
+// 답글의 답글도 들여쓰기가 계속 깊어지지 않도록, 최상위 댓글 바로 아래로 평탄화합니다.
+// (누구에게 답글인지는 parentId에 그대로 남아 있어 "OO님에게 답글" 표시는 유지됩니다)
+export function buildCommentTree(comments) {
+  const byId = new Map()
+  const roots = []
+  ;(comments || []).forEach((c) => byId.set(c.id, { ...c, replies: [] }))
+  byId.forEach((c) => {
+    if (!c.parentId || !byId.has(c.parentId)) {
+      roots.push(c)
+    }
+  })
+  byId.forEach((c) => {
+    if (!c.parentId || !byId.has(c.parentId)) return
+    let ancestor = c
+    while (ancestor.parentId && byId.has(ancestor.parentId)) {
+      ancestor = byId.get(ancestor.parentId)
+    }
+    ancestor.replies.push(c)
+  })
+  return roots
+}

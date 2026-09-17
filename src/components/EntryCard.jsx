@@ -11,6 +11,8 @@ import ReactionBar from './ReactionBar.jsx'
 import CommentList from './CommentList.jsx'
 import CommentForm from './CommentForm.jsx'
 import EntryEditor from './EntryEditor.jsx'
+import RichContent from './RichContent.jsx'
+import { isContentEmpty } from '../lib/richContent.js'
 
 export default function EntryCard({ entry: initialEntry, sha: initialSha, date, memberId, showDate = false, onDeleted }) {
   const auth = useAuth()
@@ -45,10 +47,11 @@ export default function EntryCard({ entry: initialEntry, sha: initialSha, date, 
     }
   }
 
-  async function handleAddComment({ text, imageFile }) {
+  async function handleAddComment({ text, imageFile }, parentId = null) {
     let imgPath = null
     if (imageFile) {
-      const { base64, extension } = await resizeImageFile(imageFile)
+      // 댓글 이미지는 이모티콘처럼 작게 쓰이므로 일반 사진보다 훨씬 작게 저장합니다.
+      const { base64, extension } = await resizeImageFile(imageFile, { maxWidth: 240 })
       imgPath = imagePath(date, auth.currentMember.id, `comment.${extension}`)
       await auth.client.putBase64File(imgPath, base64, { message: `댓글 이미지 (${date})` })
     }
@@ -58,6 +61,7 @@ export default function EntryCard({ entry: initialEntry, sha: initialSha, date, 
       text,
       image: imgPath,
       createdAt: new Date().toISOString(),
+      parentId,
     }
     const nextEntry = withNewComment(entry, comment)
     await persist(nextEntry)
@@ -127,8 +131,12 @@ export default function EntryCard({ entry: initialEntry, sha: initialSha, date, 
             })}
             {sleepHours != null && <span className="chip checklist-status">{sleepHours}시간 수면</span>}
           </div>
-          {entry.content ? (
-            <p className="entry-content">{entry.content}</p>
+          {!isContentEmpty(entry.content) ? (
+            <RichContent
+              html={entry.content}
+              className="entry-content"
+              onImageClick={setLightboxPath}
+            />
           ) : (
             <p className="entry-content empty">글 없이 체크리스트만 기록했어요.</p>
           )}
@@ -153,7 +161,10 @@ export default function EntryCard({ entry: initialEntry, sha: initialSha, date, 
       <ReactionBar entry={entry} onToggle={handleToggleReaction} />
 
       <div className="comment-section">
-        <CommentList comments={entry.comments} />
+        <CommentList
+          comments={entry.comments}
+          onReply={(parentId, payload) => handleAddComment(payload, parentId)}
+        />
         <CommentForm onSubmit={handleAddComment} />
       </div>
 
