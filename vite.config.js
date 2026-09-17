@@ -7,5 +7,5 @@ import react from '@vitejs/plugin-react'
 // (User/Organization Pages, 즉 <아이디>.github.io 레포라면 base: '/' 유지)
 export default defineConfig({
   plugins: [react()],
-  base: '/our-diary/',
+  base: '/mayeyamo-diary/',
 })
